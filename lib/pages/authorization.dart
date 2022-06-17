@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/error_codes.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:secrectjar/pages/secrets.dart';
+import 'package:secrectjar/pages/secrets_list.dart';
 
 class Authorization extends StatefulWidget {
   const Authorization({Key? key}) : super(key: key);
@@ -116,7 +116,7 @@ class _AuthorizationState extends State<Authorization> {
 
       if (authenticated) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const Secrets()),
+          MaterialPageRoute(builder: (context) => const SecretsList()),
         );
       } else {
         setState(() {});
