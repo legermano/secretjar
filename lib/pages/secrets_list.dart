@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:hive/hive.dart';
+import 'package:secrectjar/model/secret_model.dart';
+import 'package:secrectjar/utils/theme/encrypt_service.dart';
+import 'package:secrectjar/widgets/secret.dart';
 
 class SecretsList extends StatefulWidget {
   const SecretsList({Key? key}) : super(key: key);
@@ -10,8 +12,8 @@ class SecretsList extends StatefulWidget {
 }
 
 class _SecretsListState extends State<SecretsList> {
-  Box box = Hive.box('secrets');
-  bool longPressed = false;
+  SecretModel secretModel = SecretModel();
+  EncryptService encryptService = EncryptService();
 
   @override
   Widget build(BuildContext context) {
@@ -24,9 +26,10 @@ class _SecretsListState extends State<SecretsList> {
             fontSize: 22,
           ),
         ),
+        // backgroundColor: Theme.of(context).primaryColor,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => {},
+        onPressed: () => _secretForm(context),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
@@ -37,14 +40,18 @@ class _SecretsListState extends State<SecretsList> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      body: FutureBuilder(
+      body: FutureBuilder<List?>(
         future: fetch(),
         builder: (context, snapshot) {
-          if(snapshot.data == null) {
-            return noSecrets();
-          }
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else {
+            if (!snapshot.hasData) {
+              return noSecrets();
+            }
 
-          return secretsList(context, snapshot);
+            return secretsList(context, snapshot);
+          }
         },
       ),
     );
@@ -67,18 +74,34 @@ class _SecretsListState extends State<SecretsList> {
     return ListView.builder(
       itemCount: snapshot.data.length,
       itemBuilder: (context, index) {
-        Map data = box.getAt(index);
+        Map data = secretModel.get(index);
         return Card(
           margin: const EdgeInsets.all(12),
           child: Slidable(
-            startActionPane: ActionPane(
+            endActionPane: ActionPane(
               motion: const DrawerMotion(),
               children: [
+                SlidableAction(
+                  label: 'Editar',
+                  backgroundColor: Colors.black45,
+                  icon: Icons.edit,
+                  onPressed: (context) {
+                    _secretForm(
+                      context,
+                      index: index,
+                      type: "${data['type']}",
+                      name: "${data['name']}",
+                      login: "${data['login']}",
+                      password: "${data['password']}",
+                    );
+                    setState(() {});
+                  },
+                ),
                 SlidableAction(
                   label: 'Excluir',
                   backgroundColor: Colors.red,
                   icon: Icons.delete,
-                  onPressed: (context) {},
+                  onPressed: (context) => _delete(index),
                 ),
               ],
             ),
@@ -87,13 +110,13 @@ class _SecretsListState extends State<SecretsList> {
                 vertical: 12,
                 horizontal: 12,
               ),
-              tileColor: const Color(0xff1c1c1c),
+              tileColor: Colors.grey[850],
               leading: const Icon(
                 Icons.lock,
                 size: 32,
               ),
               title: Text(
-                "${data['nick']}",
+                "${data['name']}",
                 style: const TextStyle(
                   fontSize: 22,
                   color: Colors.grey,
@@ -102,14 +125,17 @@ class _SecretsListState extends State<SecretsList> {
                 overflow: TextOverflow.ellipsis,
               ),
               subtitle: const Text(
-                "Clique para copiar seu segredo!",
+                "Clique no ícone para copiar a senha do seu segredo!",
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey,
                 ),
               ),
               trailing: IconButton(
-                onPressed: () {},
+                onPressed: () => encryptService.copyToClipboard(
+                  data['password'],
+                  context,
+                ),
                 icon: const Icon(
                   Icons.copy_rounded,
                   size: 36,
@@ -122,11 +148,42 @@ class _SecretsListState extends State<SecretsList> {
     );
   }
 
-  Future fetch() async {
-    if(box.values.isEmpty) {
+  Future<List?> fetch() async {
+    Iterable<dynamic> secrets = secretModel.getAll();
+
+    if (secrets.isEmpty) {
       return Future.value(null);
     }
 
-    return Future.value(box.toMap());
+    return Future.value(secrets.toList());
+  }
+
+  void _delete(int index) async {
+    await secretModel.delete(index);
+    setState(() {});
+  }
+
+  Future<void> _secretForm(
+    BuildContext context, {
+    int? index,
+    String type = "",
+    String name = "",
+    String login = "",
+    String password = "",
+  }) async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return Secrect(
+          index: index,
+          type: type,
+          name: name,
+          login: login,
+          password: password,
+        );
+      },
+    );
+
+    setState(() {});
   }
 }

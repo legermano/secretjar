@@ -20,7 +20,7 @@ void main() async {
     await secureStorage.write(key: 'key', value: base64Encode(key));
   }
 
-  var keyStr = await secureStorage.read(key: 'key');
+  String? keyStr = await secureStorage.read(key: 'key');
 
   if (keyStr != null) {
     Uint8List encryptionKey = base64Url.decode(keyStr);
