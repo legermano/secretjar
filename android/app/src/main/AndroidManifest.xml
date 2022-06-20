@@ -2,7 +2,7 @@
     package="com.example.secrectjar">
     <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
     <application
-        android:label="secrectjar"
+        android:label="Secret Jar"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

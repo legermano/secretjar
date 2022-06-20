@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:local_auth/error_codes.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:secrectjar/pages/secrets_list.dart';
+import 'package:secrectjar/utils/lifecycle_event_handler.dart';
 
 class Authorization extends StatefulWidget {
   const Authorization({Key? key}) : super(key: key);
@@ -18,6 +19,12 @@ class _AuthorizationState extends State<Authorization> {
   void initState() {
     authenticate();
     super.initState();
+
+    WidgetsBinding.instance.addObserver(
+      LifecycleEventHandler(
+        resumeCallBack: () async => authenticateResume()
+      )
+    );
   }
 
   @override
@@ -100,6 +107,7 @@ class _AuthorizationState extends State<Authorization> {
     );
   }
 
+  /// Authenticate function called when opening the app
   void authenticate() async {
     try {
       var localAuth = LocalAuthentication();
@@ -120,6 +128,49 @@ class _AuthorizationState extends State<Authorization> {
         );
       } else {
         setState(() {});
+      }
+    } on PlatformException catch (e) {
+      if (e.code == notAvailable) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text(
+              "Erro",
+            ),
+            content: const Text(
+              "Você precisa configurar um PIN ou uma autenticação biométrica para poder utilizar esse app! \n Estou fazendo isso para a sua segurança 🙂",
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  "Ok",
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
+  /// Authenticate function called when reopening the app from the background
+  void authenticateResume() async {
+    try {
+      var localAuth = LocalAuthentication();
+      authenticated = await localAuth.authenticate(
+        localizedReason:
+            'Por favor se autentique para visualizar seus segredos 🤫',
+        options: const AuthenticationOptions(
+          biometricOnly: true,
+          useErrorDialogs: true,
+        ),
+      );
+
+      if(authenticated) {
+        return;
+      } else {
+        authenticateResume();
       }
     } on PlatformException catch (e) {
       if (e.code == notAvailable) {

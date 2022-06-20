@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:secrectjar/model/secret_model.dart';
-import 'package:secrectjar/utils/theme/encrypt_service.dart';
+import 'package:secrectjar/utils/encrypt_service.dart';
 
 class Secrect extends StatefulWidget {
   final int? index;

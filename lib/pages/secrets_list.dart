@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:secrectjar/model/secret_model.dart';
-import 'package:secrectjar/utils/theme/encrypt_service.dart';
+import 'package:secrectjar/utils/encrypt_service.dart';
 import 'package:secrectjar/widgets/secret.dart';
 
 class SecretsList extends StatefulWidget {
@@ -14,17 +14,41 @@ class SecretsList extends StatefulWidget {
 class _SecretsListState extends State<SecretsList> {
   SecretModel secretModel = SecretModel();
   EncryptService encryptService = EncryptService();
+  int secretsCount = 0;
+  var secretsMax = "∞";
+
+  @override
+  void initState() {
+    updateCounter();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: const Text(
-          "Seus segredos",
-          style: TextStyle(
-            fontSize: 22,
-          ),
+        title: Row(
+          children: [
+            const Flexible(
+              flex: 1,
+              fit: FlexFit.tight,
+              child: Text(
+                "Seus segredos",
+                style: TextStyle(
+                  fontSize: 22,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            Flexible(
+              flex: 0,
+              fit: FlexFit.tight,
+              child: Text(
+                "$secretsCount/$secretsMax",
+              ),
+            )
+          ],
         ),
         // backgroundColor: Theme.of(context).primaryColor,
       ),
@@ -160,7 +184,7 @@ class _SecretsListState extends State<SecretsList> {
 
   void _delete(int index) async {
     await secretModel.delete(index);
-    setState(() {});
+    updateCounter();
   }
 
   Future<void> _secretForm(
@@ -184,6 +208,12 @@ class _SecretsListState extends State<SecretsList> {
       },
     );
 
-    setState(() {});
+    updateCounter();
+  }
+
+  void updateCounter() {    
+    setState(() {
+      secretsCount = secretModel.getAll().length;
+    });
   }
 }
